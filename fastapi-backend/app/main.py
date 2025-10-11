@@ -1,0 +1,49 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from .models.chat_models import ChatRequest
+from .services import chat_service
+from fastapi.responses import StreamingResponse
+
+# Initialize the FastAPI application
+app = FastAPI(
+    title="AI Chatbot API",
+    description="An API for the AI Chatbot powered by Groq and LangChain.",
+    version="1.0.0"
+)
+
+# --- CORS (Cross-Origin Resource Sharing) Middleware ---
+# This is crucial for allowing your Angular frontend (running on http://localhost:4200)
+# to communicate with this backend (running on http://localhost:8000).
+origins = [
+    "http://localhost:4200", # Your Angular app's origin
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"], # Allows all headers
+)
+
+# --- API Endpoints ---
+
+@app.get("/", tags=["Root"])
+async def read_root():
+    """A simple root endpoint to confirm the API is running."""
+    return {"message": "Welcome to the AI Chatbot API!"}
+
+
+@app.post("/api/chat/stream", tags=["Chat"])
+async def handle_chat_stream(request: ChatRequest):
+    """
+    Receives a user's message, processes it using the streaming Groq chain,
+    and streams the response back to the client word by word.
+    """
+    # This returns a StreamingResponse, which FastAPI handles specially.
+    # It will keep the connection open and send data as it's yielded from the service.
+    return StreamingResponse(
+        chat_service.stream_groq_message(request.message),
+        media_type="text/event-stream"
+    )
+

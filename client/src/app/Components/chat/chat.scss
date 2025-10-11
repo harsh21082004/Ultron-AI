@@ -1,0 +1,24 @@
+@use '@angular/material' as mat;
+
+// Customize the entire app. Change :root to your selector if you want to scope the styles.
+:root {
+  @include mat.menu-overrides((
+    container-shape: 22px,
+    divider-color: red,
+    item-icon-size: 40px,
+  ));
+}
+
+
+.chat {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+.chat-screen{
+    background-color: #1b1c1d;
+}
+
+.chat-container::-webkit-scrollbar{
+  display: none;
+}

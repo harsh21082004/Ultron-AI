@@ -1,0 +1,88 @@
+<aside class="drawer px-4 py-1.75 left-0 top-0 h-full flex flex-col"
+  [ngClass]="{ 'drawer-open': isDrawerOpen, 'drawer-closed': !isDrawerOpen }" (mouseover)="openDrawer()"
+  (mouseout)="!drawerOpenUsingMenu && closeDrawer()">
+
+  <div class="top flex justify-between py-4 items-center w-full">
+    <button (click)="toggleDrawer()" mat-icon-button class="w-full h-full flex items-center justify-center">
+      <mat-icon class="cursor-pointer">menu</mat-icon>
+    </button>
+    <button [class.content-hidden]="!isDrawerOpen" (click)="openBottomSheet()" mat-icon-button
+      class="cursor-pointer w-full h-full flex items-center justify-center">
+      <mat-icon class="cursor-pointer">search</mat-icon>
+    </button>
+  </div>
+  <button matButton [matMenuTriggerFor]="aboveMenu" style="text-wrap: nowrap;" class="chat my-4 flex justify-start items-center gap-4">
+    <mat-icon class="chat-icon">chat_add_on</mat-icon>
+    <span class="text-base font-normal" [class.content-hidden]="!isDrawerOpen">New Chat</span>
+  </button>
+  <div class="sidebar-content-wrapper" style="text-wrap: nowrap;" [class.content-hidden]="!isDrawerOpen">
+    <div class="flex-1 mt-4 nav-lists">
+      <h3 class="text-xs px-2.5 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
+      <mat-list class="nav-list">
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="#">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="/login">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+      </mat-list>
+
+      <h3 class="text-xs px-2.5 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
+      <mat-list class="nav-list">
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+      </mat-list>
+      <h3 class="text-xs px-3 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
+      <mat-list class="nav-list">
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+        <mat-list-item class="nav-list-item">
+          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
+        </mat-list-item>
+      </mat-list>
+    </div>
+
+  </div>
+  <div class="py-5">
+    <button matButton [matMenuTriggerFor]="aboveMenu" class="settings flex justify-start items-center gap-4">
+      <mat-icon class="settings-icon">brightness_5</mat-icon>
+      <span class="text-base font-normal" [class.content-hidden]="!isDrawerOpen">Settings</span>
+    </button>
+    <mat-menu #aboveMenu="matMenu" yPosition="above" xPosition="after" panelClass="bottom-left-transform-origin">
+      <button mat-menu-item>Item 1</button>
+      <button mat-menu-item>Item 2</button>
+    </mat-menu>
+  </div>
+</aside>

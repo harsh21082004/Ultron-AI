@@ -1,0 +1,98 @@
+/* your-component.scss */
+
+@use '@angular/material' as mat;
+
+// --- Drawer container styles (no change) ---
+.drawer {
+  transition: width 0.2s ease-in-out;
+  background-color: var(--mat-menu-container-color);
+  overflow: hidden; // Keep this!
+  box-sizing: border-box;
+  height: 100vh;
+}
+
+.drawer-open {
+  width: 300px;
+}
+
+.drawer-closed {
+  width: 75px;
+}
+
+* {
+  overflow: hidden
+}
+
+// --- NEW: Wrapper for all fading content ---
+.sidebar-content-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s ease-in-out;
+}
+
+// --- NEW: The class that hides the content ---
+.content-hidden {
+  opacity: 0;
+  pointer-events: none; // Prevents interacting with invisible content
+}
+
+.nav-list {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.nav-lists {
+  overflow-y: auto !important;
+}
+
+.nav-lists::-webkit-scrollbar {
+  display: none !important;
+}
+
+.nav-list-item {
+  padding: 0 !important;
+  width: 100%;
+}
+
+.nav-list-item span,
+.nav-list-item a {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.nav-list-item a {
+  padding: 0 10px !important;
+}
+
+.bottom-left-transform-origin.mat-mdc-menu-panel {
+  transform-origin: left bottom !important;
+}
+
+.settings {
+  width: 100%;
+  padding: 16px 10px !important;
+  justify-content: flex-start;
+}
+
+.settings-icon {
+  margin: 0 !important;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.chat {
+  width: 100%;
+  padding: 16px 10px !important;
+  justify-content: flex-start;
+}
+
+.chat-icon {
+  margin: 0 !important;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
