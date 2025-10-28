@@ -6,13 +6,8 @@ import { filter } from 'rxjs';
   providedIn: 'root'
 })
 export class LoadingService {
-  private _progress = signal(0);
-  public readonly progress = this._progress.asReadonly();
-  
   private _isLoading = signal(false);
   public readonly isLoading = this._isLoading.asReadonly();
-  
-  private intervalId: any = null;
 
   constructor(private router: Router, private zone: NgZone) {
     this.router.events.pipe(
@@ -25,43 +20,14 @@ export class LoadingService {
       )
     ).subscribe(event => {
       if (event instanceof NavigationStart) {
-        // When navigation starts:
-        // 1. Set loading to true and progress to 40.
+        // When navigation starts, set loading to true.
         this._isLoading.set(true);
-        this._progress.set(40);
-        
-        if (this.intervalId) {
-          clearInterval(this.intervalId);
-        }
-
-        // 2. Start a new interval to smoothly increase the progress.
-        this.zone.runOutsideAngular(() => {
-          this.intervalId = setInterval(() => {
-            this.zone.run(() => {
-              this._progress.update(value => {
-                if (value >= 99) {
-                  clearInterval(this.intervalId);
-                  return value;
-                }
-                return value + 1;
-              });
-            });
-          }, 80); // Adjust this value to make the progress faster or slower
-        });
-
       } else {
-        // When navigation finishes for any reason:
-        if (this.intervalId) {
-          clearInterval(this.intervalId);
-        }
-        
-        // Set the progress to 100 to show completion.
-        this._progress.set(100);
-        
-        // After a short delay, reset progress and the loading state to hide the bar.
+        // When navigation finishes (for any reason), set loading to false after a short delay.
+        // The delay ensures the bar is visible even for very fast navigations.
         setTimeout(() => {
           this._isLoading.set(false);
-        }, 500); // Wait 0.5s before hiding
+        }, 300);
       }
     });
   }

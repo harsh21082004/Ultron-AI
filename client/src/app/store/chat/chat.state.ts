@@ -1,12 +1,19 @@
+
+export interface ContentBlock {
+  type: 'text' | 'code' | 'image' | 'video' | 'table';
+  value: any; 
+}
+
 export interface ChatMessage {
+_id: any;
   sender: 'user' | 'ai';
-  content: string;
-  isStreaming?: boolean; // Optional flag to know if this AI message is still being generated
+  content: ContentBlock[];
+  isStreaming?: boolean; // Optional flag for real-time AI responses
 }
 
 export interface ChatState {
   messages: ChatMessage[];
-  isLoading: boolean; // True when we are waiting for the first chunk
+  isLoading: boolean;
   error: string | null;
 }
 

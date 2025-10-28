@@ -1,24 +1,47 @@
 @use '@angular/material' as mat;
 
-// Customize the entire app. Change :root to your selector if you want to scope the styles.
-:root {
-  @include mat.menu-overrides((
-    container-shape: 22px,
-    divider-color: red,
-    item-icon-size: 40px,
-  ));
-}
 
 
 .chat {
-    border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
 }
 
-.chat-screen{
-    background-color: #1b1c1d;
-}
-
-.chat-container::-webkit-scrollbar{
+.chat-container::-webkit-scrollbar {
   display: none;
+}
+
+.ai-response {
+  left: 10px;
+  top: 10px;
+}
+
+.user-bubble{
+  background-color: var(--mat-menu-container-color);
+  border-bottom-left-radius: 20px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+
+}
+
+.chat-input-content{
+  background-color: var(--mat-menu-container-color);
+  box-shadow: 0 0 5px grey;
+}
+
+// .gradient-spinner {
+//   // Create a linear gradient as a background for the SVG stroke
+//   @include mat.progress-spinner-overrides((
+//     active-indicator-color: linear-gradient(135deg,rgba(189, 224, 255, 1) 20%, rgba(143, 152, 255, 1) 70%),
+//   ));
+// }
+
+:host ::ng-deep .mat-mdc-progress-spinner .mdc-circular-progress__determinate-circle,
+:host ::ng-deep .mat-mdc-progress-spinner .mdc-circular-progress__indeterminate-circle-graphic {
+  stroke: url(#spinnerGradient) !important;
+}
+
+#spinnerGradient {
+  background: #bd0058;
+  background: linear-gradient(90deg, rgba(189, 0, 88, 1) 0%, rgba(250, 100, 157, 1) 30%, rgba(213, 217, 129, 1) 50%, rgba(134, 237, 83, 1) 100%);
 }

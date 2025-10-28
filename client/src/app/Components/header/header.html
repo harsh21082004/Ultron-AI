@@ -1,48 +1,15 @@
-<header class="h-16 flex-shrink-0 flex items-center justify-between px-6 header">
+<header class="h-16 relative flex-shrink-0 flex items-center justify-between px-6 header">
+  <div class="absolute bottom-0 left-0 w-full z-50">
+    @if (isLoading()) {
+    <mat-progress-bar mode="indeterminate" color="primary">
+    </mat-progress-bar>
+    }
+  </div>
   <div class="logo">
     <img
       [src]="(isDarkMode() ? 'assets/images/ultron-icon-text-only.png' : 'assets/images/ultron-icon-text-only-light.png')"
       class="logo-image" alt="logo">
   </div>
-  <button mat-button color="primary" [matMenuTriggerFor]="animals">Menu</button>
-  <button matButton [matMenuTriggerFor]="animals">Animal index</button>
-  <mat-menu #animals="matMenu">
-    <button mat-menu-item [matMenuTriggerFor]="vertebrates">Vertebrates</button>
-    <button mat-menu-item [matMenuTriggerFor]="invertebrates">Invertebrates</button>
-  </mat-menu>
-
-  <mat-menu #vertebrates="matMenu">
-    <button mat-menu-item [matMenuTriggerFor]="fish">Fishes</button>
-    <button mat-menu-item [matMenuTriggerFor]="amphibians">Amphibians</button>
-    <button mat-menu-item>Reptiles</button>
-    <button mat-menu-item>Birds</button>
-    <button mat-menu-item>Mammals</button>
-  </mat-menu>
-
-  <mat-menu #invertebrates="matMenu">
-    <button mat-menu-item>Insects</button>
-    <button mat-menu-item>Molluscs</button>
-    <button mat-menu-item>Crustaceans</button>
-    <button mat-menu-item>Corals</button>
-    <button mat-menu-item>Arachnids</button>
-    <button mat-menu-item>Velvet worms</button>
-    <button mat-menu-item>Horseshoe crabs</button>
-  </mat-menu>
-
-  <mat-menu #fish="matMenu">
-    <button mat-menu-item>Baikal oilfish</button>
-    <button mat-menu-item>Bala shark</button>
-    <button mat-menu-item>Ballan wrasse</button>
-    <button mat-menu-item>Bamboo shark</button>
-    <button mat-menu-item>Banded killifish</button>
-  </mat-menu>
-
-  <mat-menu #amphibians="matMenu">
-    <button mat-menu-item>Sonoran desert toad</button>
-    <button mat-menu-item>Western toad</button>
-    <button mat-menu-item>Arroyo toad</button>
-    <button mat-menu-item>Yosemite toad</button>
-  </mat-menu>
   <div class="flex items-center gap-2">
     <button matIconButton aria-label="Example icon button with a vertical three dot icon"
       (click)="themeService.toggleTheme()">

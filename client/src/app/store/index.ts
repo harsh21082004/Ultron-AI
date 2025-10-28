@@ -1,21 +1,20 @@
 import { ActionReducerMap } from '@ngrx/store';
+import { routerReducer, RouterReducerState } from '@ngrx/router-store'; // 1. Import these
+
 import { AuthState } from './auth/auth.state';
 import { authReducer } from './auth/auth.reducer';
+import { ChatState } from './chat/chat.state';
+import { chatReducer } from './chat/chat.reducer';
 
-/**
- * The root state for the entire application.
- * As your application grows, you will add more feature states here.
- */
 export interface AppState {
   auth: AuthState;
-  // ... other feature states
+  chat: ChatState;
+  router: RouterReducerState; // 2. Add the router state
 }
 
-/**
- * A map of all the reducers in the application.
- * The keys here will be the keys of the state slices in the store.
- */
 export const reducers: ActionReducerMap<AppState> = {
   auth: authReducer,
-  // ... other feature reducers
+  chat: chatReducer,
+  router: routerReducer, // 3. Register the router reducer
 };
+

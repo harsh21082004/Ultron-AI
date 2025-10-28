@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import * as AuthActions from './store/auth/auth.actions';
@@ -15,27 +15,25 @@ import { Sidebar } from "./Components/sidebar/sidebar";
   standalone: true,
   imports: [
     RouterOutlet,
-    CommonModule, // Required for the @if block
+    CommonModule,
     MatProgressBarModule,
     Sidebar,
   ],
-  // The template now includes the progress bar at the top level, outside the router outlet.
   template: `
     <!-- The progress bar is fixed to the top of the viewport -->
-    @if (isLoading) {
-     <div class="progress fixed top-0 left-0 w-full z-50">
+    <!-- It is only visible when isLoading() is true, as controlled by your LoadingService -->
+    <!-- @if (isLoading()) {
       <mat-progress-bar 
-        mode="determinate" 
-        [value]="progress()" 
+        class="fixed top-0 left-0 w-full z-50"
+        mode="indeterminate" 
         color="primary">
       </mat-progress-bar>
-      </div>
-    }
+    } -->
     <div class="flex h-screen w-screen">
-      <!-- The sidebar is part of the root layout -->
-       @if(!isLoginOrSignupPage()){
-      <app-sidebar></app-sidebar>
-       }
+      <!-- The sidebar is conditionally displayed based on the current route -->
+      @if(!isLoginOrSignupPage()){
+        <app-sidebar></app-sidebar>
+      }
       
       <main class="flex-grow">
         <router-outlet></router-outlet>
@@ -46,11 +44,9 @@ import { Sidebar } from "./Components/sidebar/sidebar";
 export class App implements OnInit {
   selectIsAuthenticated$: Observable<boolean>;
 
-
-  // Inject the LoadingService and get its progress signal
+  // Inject the LoadingService and get its signal
   private loadingService = inject(LoadingService);
-  progress = this.loadingService.progress;
-  isLoading = this.loadingService.isLoading();
+  isLoading = this.loadingService.isLoading; 
   isLoginOrSignupPage = signal(false);
 
   constructor(
@@ -59,24 +55,20 @@ export class App implements OnInit {
     private themeService: ThemeService,
   ) {
     this.selectIsAuthenticated$ = this.store.select(selectIsAuthenticated);
+    
+    // Subscribe to router events to dynamically check the URL on every navigation
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      // Check the URL after the navigation is complete.
-      const isLoginPage = event.urlAfterRedirects === '/login';
-      const isSignupPage = event.urlAfterRedirects === '/signup';
-      this.isLoginOrSignupPage.set(isLoginPage || isSignupPage);
+      const onAuthPage = event.urlAfterRedirects === '/login' || event.urlAfterRedirects === '/signup';
+      this.isLoginOrSignupPage.set(onAuthPage);
     });
   }
 
   ngOnInit(): void {
-    // Initialize the theme when the app loads
     this.themeService.loadTheme();
-
-    // Dispatch the action to check for an existing session
     this.store.dispatch(AuthActions.initSession());
 
-    // Your existing logic to redirect already authenticated users
     this.selectIsAuthenticated$.subscribe(isAuth => {
       if (isAuth && (this.router.url === '/signup' || this.router.url === '/login')) {
         this.router.navigate(['/']);
@@ -84,3 +76,4 @@ export class App implements OnInit {
     });
   }
 }
+

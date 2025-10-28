@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .models.chat_models import ChatRequest
+from .models.chat_models import ChatRequest, ChatResponse
 from .services import chat_service
 from fastapi.responses import StreamingResponse
+from typing import List
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -31,11 +32,19 @@ app.add_middleware(
 @app.get("/", tags=["Root"])
 async def read_root():
     """A simple root endpoint to confirm the API is running."""
-    return {"message": "Welcome to the AI Chatbot API!"}
+    return {"message": "Welcome to the Ultron AI Chatbot API!"}
+
+
+@app.get("/api/chat/{session_id}", tags=["Chat"])
+async def handle_get_chat_history(session_id: str) -> List[dict]:
+    """
+    Retrieves the message history for a specific chat session.
+    """
+    return chat_service.get_chat_history(session_id)
 
 
 @app.post("/api/chat/stream", tags=["Chat"])
-async def handle_chat_stream(request: ChatRequest):
+async def handle_chat_stream(request: ChatRequest, session_id: str = "default_session"):
     """
     Receives a user's message, processes it using the streaming Groq chain,
     and streams the response back to the client word by word.
@@ -43,7 +52,7 @@ async def handle_chat_stream(request: ChatRequest):
     # This returns a StreamingResponse, which FastAPI handles specially.
     # It will keep the connection open and send data as it's yielded from the service.
     return StreamingResponse(
-        chat_service.stream_groq_message(request.message),
+        chat_service.stream_groq_message(request.message, session_id),
         media_type="text/event-stream"
     )
 

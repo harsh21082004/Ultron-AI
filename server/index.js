@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
+const chatRoutes = require('./routes/chat.routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const passport = require('passport');
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/chats', chatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -16,7 +16,7 @@
     "module": "preserve",
     
     // THIS IS THE FIX: The flag has been moved inside compilerOptions.
-    "allowArbitraryExtensions": true
+    "allowArbitraryExtensions": true,
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

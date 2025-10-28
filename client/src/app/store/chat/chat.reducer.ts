@@ -1,56 +1,103 @@
 import { createReducer, on } from '@ngrx/store';
-import { initialChatState, ChatMessage } from './chat.state';
+import { initialChatState, ChatMessage, ContentBlock } from './chat.state';
 import * as ChatActions from './chat.actions';
 
 export const chatReducer = createReducer(
   initialChatState,
 
-  // When the user sends a message, add it to the list and set loading state
+  // --- Handlers for Loading Chat History ---
+  // This is triggered when the page loads with a chat ID.
+  on(ChatActions.loadChatHistory, (state) => ({
+    ...state,
+    isLoading: true,
+    error: null,
+    messages: [], // Clear old messages while loading history
+  })),
+
+  // This handles the successful response from the API.
+  on(ChatActions.loadChatHistorySuccess, (state, { messages }) => ({
+    ...state,
+    isLoading: false,
+    messages: messages,
+  })),
+
+  // This handles any errors during the API call.
+  on(ChatActions.loadChatHistoryFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error: error,
+  })),
+
+  // --- Handlers for Real-Time Chat ---
   on(ChatActions.sendMessage, (state, { message }) => ({
     ...state,
     isLoading: true,
     error: null,
-    messages: [...state.messages, { sender: 'user', content: message }],
+    messages: [
+      ...state.messages,
+      {
+        sender: 'user',
+        content: [{ type: 'text', value: message }],
+        _id: crypto.randomUUID()
+      },
+    ],
   })),
 
-  // When the stream starts, add a new, empty AI message to the list
   on(ChatActions.streamStarted, (state) => ({
     ...state,
     isLoading: false,
-    messages: [...state.messages, { sender: 'ai', content: '', isStreaming: true }],
+    messages: [
+      ...state.messages,
+      { sender: 'ai', content: [], isStreaming: true, _id: "temp-id" },
+
+    ],
   })),
 
-  // For each chunk, find the last AI message and append the new text
   on(ChatActions.receiveStreamChunk, (state, { chunk }) => {
-    const newMessages = [...state.messages];
-    const lastMessage = newMessages[newMessages.length - 1];
+    if (state.messages.length === 0) return state;
+    const lastMessage = state.messages[state.messages.length - 1];
+    if (lastMessage?.sender !== 'ai' || !lastMessage.isStreaming) return state;
 
-    if (lastMessage && lastMessage.sender === 'ai') {
-      // Append the chunk to the content of the last AI message
-      newMessages[newMessages.length - 1] = {
-        ...lastMessage,
-        content: lastMessage.content + chunk,
-      };
+    const lastContentBlock = lastMessage.content[lastMessage.content.length - 1];
+    let newContent: ContentBlock[];
+
+    if (lastContentBlock?.type === 'text') {
+      newContent = [
+        ...lastMessage.content.slice(0, -1),
+        { ...lastContentBlock, value: lastContentBlock.value + chunk }
+      ];
+    } else {
+      newContent = [...lastMessage.content, { type: 'text', value: chunk }];
     }
 
-    return { ...state, messages: newMessages };
+    return {
+      ...state,
+      messages: [
+        ...state.messages.slice(0, -1),
+        { ...lastMessage, content: newContent }
+      ]
+    };
   }),
 
-  // When the stream is complete, find the last AI message and mark it as no longer streaming
   on(ChatActions.streamComplete, (state) => {
-    const newMessages = [...state.messages];
-    const lastMessage = newMessages[newMessages.length - 1];
+    if (state.messages.length === 0) return state;
+    const lastMessage = state.messages[state.messages.length - 1];
+    if (lastMessage?.sender !== 'ai') return state;
 
-    if (lastMessage && lastMessage.sender === 'ai') {
-      newMessages[newMessages.length - 1] = { ...lastMessage, isStreaming: false };
-    }
-    return { ...state, isLoading: false, messages: newMessages };
+    return {
+      ...state,
+      isLoading: false,
+      messages: [
+        ...state.messages.slice(0, -1),
+        { ...lastMessage, isStreaming: false }
+      ]
+    };
   }),
 
-  // Handle any errors from the stream
   on(ChatActions.streamFailure, (state, { error }) => ({
     ...state,
     isLoading: false,
     error: error,
   }))
 );
+
