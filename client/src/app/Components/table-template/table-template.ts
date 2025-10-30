@@ -18,7 +18,7 @@ export interface TableData {
 })
 export class TableTemplateComponent implements OnChanges {
   @Input() data!: TableData;
-  displayedColumns: string[] = [];
+  displayedColumns: string[] = []; 
 
   ngOnChanges(): void {
     this.displayedColumns = (this.data && this.data.headers) ? [...this.data.headers] : [];

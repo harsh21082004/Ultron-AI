@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
 @use "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Alan+Sans:wght@300..900&display=swap');
 
 html {
   @include mat.theme((color: (primary: mat.$rose-palette,
@@ -80,10 +81,12 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: "Alan Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
 
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
 }

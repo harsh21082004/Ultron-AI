@@ -34,7 +34,7 @@ export function noWhitespaceValidator(control: any) {
     CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatMenuModule,
     MatProgressSpinnerModule, HeaderComponent, ContentRenderer,
     UltronLoaderComponent
-],
+  ],
   templateUrl: './chat.html',
   styleUrls: ['./chat.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,8 +75,40 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       if (chatId) {
         this.currentChatId = chatId;
         this.store.dispatch(ChatActions.loadChatHistory({ chatId }));
+      } else {
+        // --- THIS IS THE FIX ---
+        // If there is no chat ID, we are in a new chat.
+        // Clear the previous chat's messages from the store.
+        this.currentChatId = null;
+        this.store.dispatch(ChatActions.loadChatHistorySuccess({ messages: [] }));
       }
     });
+  }
+
+  autoGrow(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    
+    // Reset height to 'auto' to correctly calculate scrollHeight
+    textarea.style.height = 'auto';
+
+    const computedStyle = getComputedStyle(textarea);
+    // Calculate line-height, fallback to font-size * 1.2
+    const lineHeight = parseFloat(computedStyle.lineHeight) || (parseFloat(computedStyle.fontSize) * 1.2);
+    
+    // Calculate max height for 4 lines
+    // We also need to account for padding
+    const padding = parseFloat(computedStyle.paddingTop) + parseFloat(computedStyle.paddingBottom);
+    const maxHeight = (lineHeight * 4) + padding;
+
+    const scrollHeight = textarea.scrollHeight;
+
+    if (scrollHeight > maxHeight) {
+      textarea.style.height = `${maxHeight}px`;
+      textarea.style.overflowY = 'auto'; // Show scrollbar
+    } else {
+      textarea.style.height = `${scrollHeight}px`;
+      textarea.style.overflowY = 'hidden'; // Hide scrollbar
+    }
   }
 
   ngAfterViewInit(): void {
@@ -85,13 +117,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.messageElements.changes.subscribe((list: QueryList<ElementRef>) => {
       // We only scroll if there are messages and the last one is the AI's response
       if (list.length > 0) {
-          this.scrollToLastMessage();
+        this.scrollToLastMessage();
       }
     });
   }
 
   ngOnDestroy(): void {
-    
+
   }
 
   private scrollToLastMessage(): void {
@@ -102,10 +134,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (elements.length > 0) {
           // Get the last message element
           const lastElement = elements[elements.length - 1].nativeElement;
-          
+
           // Scroll the container to the top of the last message element
           lastElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          
+
           // If you still prefer scrolling the container itself to a position:
           // this.chatContainer.nativeElement.scrollTop = lastElement.offsetTop - this.chatContainer.nativeElement.offsetTop;
         }

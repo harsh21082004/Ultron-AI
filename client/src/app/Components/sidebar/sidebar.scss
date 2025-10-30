@@ -96,3 +96,13 @@
   height: 20px;
   line-height: 20px;
 }
+
+:host ::ng-deep .chat-title .mdc-button__label{
+  max-width: 100% !important;
+    /* max-width: 200px; */
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    /* display: -webkit-box; */
+    text-overflow: ellipsis !important;
+}

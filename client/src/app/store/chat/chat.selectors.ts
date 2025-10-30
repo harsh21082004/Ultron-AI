@@ -8,6 +8,11 @@ export const selectChatMessages = createSelector(
   (state) => state.messages
 );
 
+export const selectAllChats = createSelector(
+  selectChatState,
+  (state) => state.chatList
+);
+
 export const selectIsLoading = createSelector(
   selectChatState,
   (state) => state.isLoading

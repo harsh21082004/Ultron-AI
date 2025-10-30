@@ -98,6 +98,24 @@ export const chatReducer = createReducer(
     ...state,
     isLoading: false,
     error: error,
+  })),
+
+  on(ChatActions.getAllChats,(state)=> ({
+    ...state,
+    isLoading: true,
+    error: null,
+  })),
+
+  on(ChatActions.getAllChatsSuccess, (state, { chats }) => ({
+    ...state,
+    isLoading: false,
+    chatList: chats,
+  })),
+
+  on(ChatActions.getAllChatsFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error: error,
   }))
 );
 

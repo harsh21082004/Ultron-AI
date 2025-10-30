@@ -4,6 +4,7 @@ from .models.chat_models import ChatRequest, ChatResponse
 from .services import chat_service
 from fastapi.responses import StreamingResponse
 from typing import List
+from pydantic import BaseModel
 
 # Initialize the FastAPI application
 app = FastAPI(
@@ -56,3 +57,21 @@ async def handle_chat_stream(request: ChatRequest, session_id: str = "default_se
         media_type="text/event-stream"
     )
 
+class TitleRequest(BaseModel):
+    messages: List[dict]
+
+@app.post("/api/chat/generate-title")
+async def generate_title_route(request: TitleRequest):
+    """
+    Receives a chat history and returns an AI-generated title.
+    """
+    try:
+        # Get the messages from the request body
+        messages = request.messages
+        
+        # Call your service function
+        title = await chat_service.generate_chat_title(messages)
+        
+        return {"title": title}
+    except Exception as e:
+        return {"error": str(e)}, 500

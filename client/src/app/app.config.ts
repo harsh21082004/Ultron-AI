@@ -1,4 +1,4 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -11,6 +11,7 @@ import { routes } from './app.routes';
 import { reducers } from './store'; // 1. Use the reducers map from index.ts
 import { AuthEffects } from './store/auth/auth.effects';
 import { ChatEffects } from './store/chat/chat.effects';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,6 +32,7 @@ export const appConfig: ApplicationConfig = {
       maxAge: 25,
       logOnly: !isDevMode(),
     }),
+    importProvidersFrom(MonacoEditorModule.forRoot()) 
   ],
 };
 

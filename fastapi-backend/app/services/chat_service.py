@@ -39,10 +39,17 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
+title_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant. Your task is to generate a concise, 2-5 word title for the following conversation. Do not add any prefix like 'Title:'. Do not use quotes. Just return the plain text title."),
+    ("user", "{conversation_history}")
+])
+
 
 # --- CHAIN CREATION (Using modern LCEL syntax) ---
 model = get_groq_model()
 runnable = prompt | model
+
+title_chain = title_prompt | model
 
 chain_with_history = RunnableWithMessageHistory(
     runnable,
@@ -54,28 +61,45 @@ chain_with_history = RunnableWithMessageHistory(
 
 # --- SERVICE FUNCTIONS ---
 
+async def generate_chat_title(messages: list) -> str:
+    """
+    Generates a concise title for a chat history.
+    'messages' is the list of ChatMessage objects from the frontend.
+    """
+    # 1. Format the message list from the frontend into a simple string
+    conversation_str = ""
+    for msg in messages:
+        sender = "User" if msg.get('sender') == 'user' else "AI"
+        # Combine all content blocks into one string for this message
+        content = " ".join([block.get('value', '') for block in msg.get('content', []) if block.get('type') == 'text'])
+        conversation_str += f"{sender}: {content}\n"
+    
+    if not conversation_str.strip():
+        return "New Chat" # Fallback if history is empty
+
+    # 2. Invoke the title chain
+    # .ainvoke() returns a BaseMessage (like AIMessage)
+    try:
+        response_message = await title_chain.ainvoke({"conversation_history": conversation_str})
+        # Clean up the title, remove quotes or extra newlines
+        title = response_message.content.strip().replace('"', '').split('\n')[0]
+        return title if title else "New Chat"
+    except Exception as e:
+        print(f"Error generating title: {e}")
+        return "New Chat" # Fallback
+
 async def stream_groq_message(message: str, session_id: str):
+    """
+    Streams the Groq response token by token without any
+    backend buffering.
+    """
     config = {"configurable": {"session_id": session_id}}
 
-    buffer = ""
-    buffering_table = False
-
     async for chunk in chain_with_history.astream({"input": message}, config=config):
+        # Directly yield the content of the chunk.
+        # The frontend will handle parsing and buffering.
         token = chunk.content if isinstance(chunk, AIMessage) else str(chunk)
-
-        # Detect if a Markdown table / image block is starting
-        if ("| " in token or token.strip().startswith("```")) and not buffering_table:
-            buffering_table = True
-
-        if buffering_table:
-            buffer += token
-            # Table / code block normally ends with **double newline**
-            if "\n\n" in buffer or token.strip().endswith("```"):
-                yield buffer  # Send full table / code / image
-                buffer = ""
-                buffering_table = False
-        else:
-            # Normal streaming token by token
+        if token:
             yield token
 
 

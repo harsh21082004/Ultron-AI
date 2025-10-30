@@ -27,9 +27,9 @@
           class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-blue-400 mb-6 shadow-2xl animate-pulse">
         </div>
         @if (user$ | async; as user) {
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">Good Evening, {{ user.name }}.</h1>
+        <h1 class="text-4xl font-bold text-black dark:text-white">Good Evening, {{ user.name }}.</h1>
         } @else {
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">Good Evening.</h1>
+        <h1 class="text-4xl font-bold text-black dark:text-gray-100">Good Evening.</h1>
         }
         <h2 class="text-3xl font-semibold text-gray-500 dark:text-gray-400 mt-2">Can I help you with anything?</h2>
       </div>
@@ -54,12 +54,12 @@
           </div>
         </div>
         }
-        <div class="max-w-2xl p-4 " [ngClass]="{
-                  'text-white user-bubble': message.sender === 'user',
-                  'text-gray-800 dark:text-gray-300 rounded-t-2xl rounded-br-2xl rounded-bl-md': message.sender === 'ai'
+        <div class="max-w-2xl py-2 px-4 " [ngClass]="{
+                  'user-bubble': message.sender === 'user',
+                  'rounded-t-2xl rounded-br-2xl rounded-bl-md': message.sender === 'ai'
                 }" [ngStyle]="message.sender === 'ai' ? {'background-color': 'transparent !important'} : null">
           @for (block of message.content; track $index) {
-          <app-content-renderer [content]="block.value"></app-content-renderer>
+          <app-content-renderer [content]="block.value" [sender]="message.sender" class="text-base"></app-content-renderer>
           }
         </div>
       </div>
@@ -83,10 +83,10 @@
     </div>
     }
 
-    <form [formGroup]="chatForm" (ngSubmit)="sendMessage()" class="bg-gray-100 chat-input-content rounded-2xl p-2 mt-4">
+    <form [formGroup]="chatForm" (ngSubmit)="sendMessage()" class="chat-input-content rounded-2xl p-2 mt-4">
       <textarea formControlName="message" rows="1" placeholder="Message AI Chat..."
-        class="w-full bg-transparent resize-none py-2 px-4 text-gray-800 dark:text-white placeholder-gray-500 focus:outline-none"
-        (keydown)="handleEnterPress($event)"></textarea>
+        class="w-full bg-transparent resize-none py-2 px-4 text-black dark:text-white placeholder-gray-500 focus:outline-none"
+        (keydown)="handleEnterPress($event)" (input)="autoGrow($event)"></textarea>
       <div class="flex items-center justify-between mt-2">
         <div class="flex items-center gap-2">
           <button type="button" mat-stroked-button

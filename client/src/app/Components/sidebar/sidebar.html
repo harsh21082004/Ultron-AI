@@ -11,67 +11,38 @@
       <mat-icon class="cursor-pointer">search</mat-icon>
     </button>
   </div>
-  <button matButton [matMenuTriggerFor]="aboveMenu" style="text-wrap: nowrap;" class="chat my-4 flex justify-start items-center gap-4">
+  <button routerLink="/" matButton [matMenuTriggerFor]="aboveMenu" style="text-wrap: nowrap;" class="chat my-4 flex justify-start items-center gap-4">
     <mat-icon class="chat-icon">chat_add_on</mat-icon>
     <span class="text-base font-normal" [class.content-hidden]="!isDrawerOpen">New Chat</span>
   </button>
   <div class="sidebar-content-wrapper" style="text-wrap: nowrap;" [class.content-hidden]="!isDrawerOpen">
     <div class="flex-1 mt-4 nav-lists">
-      <h3 class="text-xs px-2.5 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
-      <mat-list class="nav-list">
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="#">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="/login">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-      </mat-list>
-
-      <h3 class="text-xs px-2.5 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
-      <mat-list class="nav-list">
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-      </mat-list>
-      <h3 class="text-xs px-3 my-3 font-semibold text-gray-500 uppercase tracking-wider ">Tomorrow</h3>
-      <mat-list class="nav-list">
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-        <mat-list-item class="nav-list-item">
-          <a matButton routerLink="https://www.google.com/">What's one lesson life has taught...</a>
-        </mat-list-item>
-      </mat-list>
+      @if (chats$ | async; as chats) {
+        @if (chats.length > 0) {
+          <!-- 
+            This list is sorted by 'updatedAt' from the backend.
+            Grouping by date can be added here later if needed.
+          -->
+          <mat-list class="nav-list">
+            @for (chat of chats; track chat._id) {
+              <mat-list-item class="nav-list-item">
+                <!-- Use routerLink to navigate to the specific chat -->
+                <a matButton [routerLink]="['/chat', chat._id]" class="chat-title">{{ chat.title }}</a>
+              </mat-list-item>
+            }
+          </mat-list>
+        } @else {
+          <!-- Show this if the user has no chats -->
+          <p class="text-xs px-3 my-3 font-semibold text-gray-500 uppercase tracking-wider">
+            No chats found.
+          </p>
+        }
+      } @else {
+        <!-- Optional: Show a loading state while chats are fetched -->
+        <p class="text-xs px-3 my-3 font-semibold text-gray-500 uppercase tracking-wider">
+          Loading chats...
+        </p>
+      }
     </div>
 
   </div>

@@ -56,3 +56,19 @@ export const streamFailure = createAction(
   '[Chat] Stream Failure',
   props<{ error: string }>()
 );
+
+
+export const getAllChats = createAction(
+  '[Chat] Get All Chats',
+  props<{ userId: string }>()
+);
+
+export const getAllChatsSuccess = createAction(
+  '[Chat] Get All Chats Success',
+  props<{ chats: any[] }>()
+);
+
+export const getAllChatsFailure = createAction(
+  '[Chat] Get All Chats Failure',
+  props<{ error: string }>()
+);

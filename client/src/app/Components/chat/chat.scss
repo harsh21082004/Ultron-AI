@@ -24,10 +24,31 @@
 
 }
 
-.chat-input-content{
+.chat-input-content {
   background-color: var(--mat-menu-container-color);
   box-shadow: 0 0 5px grey;
+  height: 100px;
+  min-height: 100px; /* MODIFIED: Was height: 100px */
+  height: auto;       /* Allow form to grow */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+  box-sizing: border-box;
 }
+
+/* These are the new styles for the auto-growing textarea.
+*/
+.auto-grow-textarea {
+  line-height: 1.5;   /* Set a consistent line-height for calculations */
+  overflow-y: hidden; /* Hide scrollbar initially */
+  height: auto;       /* Start at auto height */
+  /* Set an initial height that matches one line of text + padding.
+    Your textarea has py-2 (0.5rem * 2 = 1rem) + line-height (1.5rem)
+    A px value is more reliable. Let's start with ~48px.
+  */
+  min-height: 48px; 
+}
+
 
 // .gradient-spinner {
 //   // Create a linear gradient as a background for the SVG stroke

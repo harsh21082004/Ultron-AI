@@ -44,6 +44,7 @@ const saveChat = async (req, res) => {
 const getAllChats = async (req, res) => {
     try {
         const userId = req.user.id;
+        console.log(userId)
         // Find all chats for the user, but only select the title and _id fields.
         // Sort by the most recently updated.
         const chats = await Chat.find({ userId: userId })
