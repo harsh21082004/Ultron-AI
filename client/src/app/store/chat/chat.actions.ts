@@ -7,13 +7,24 @@ export const loadChatHistory = createAction(
   props<{ chatId: string }>()
 );
 
+// --- MODIFIED: Added chatId ---
 export const loadChatHistorySuccess = createAction(
   '[Chat API] Load Chat History Success',
-  props<{ messages: ChatMessage[] }>()
+  props<{ chatId: string, messages: ChatMessage[] }>()
 );
 
+// --- MODIFIED: Added chatId ---
 export const loadChatHistoryFailure = createAction(
   '[Chat API] Load Chat History Failure',
+  props<{ chatId: string, error: string }>()
+);
+
+// --- NEW: Actions for AI Memory Hydration ---
+export const hydrateHistorySuccess = createAction(
+  '[Chat API] Hydrate AI Memory Success'
+);
+export const hydrateHistoryFailure = createAction(
+  '[Chat API] Hydrate AI Memory Failure',
   props<{ error: string }>()
 );
 
@@ -23,7 +34,8 @@ export const saveChatHistory = createAction(
   props<{ chatId: string; messages: ChatMessage[] }>()
 );
 export const saveChatHistorySuccess = createAction(
-  '[Chat API] Save Chat History Success'
+  '[Chat] Save Chat History Success',
+  props<{ chatId: string, newTitle: string }>() // Add props
 );
 export const saveChatHistoryFailure = createAction(
   '[Chat API] Save Chat History Failure',
@@ -71,4 +83,10 @@ export const getAllChatsSuccess = createAction(
 export const getAllChatsFailure = createAction(
   '[Chat] Get All Chats Failure',
   props<{ error: string }>()
+);
+
+// Clear Active Chat After Navigating to New Chat
+
+export const clearActiveChat = createAction(
+  '[Chat] Clear Active Chat'
 );

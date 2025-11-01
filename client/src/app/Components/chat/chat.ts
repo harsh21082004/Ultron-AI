@@ -42,6 +42,8 @@ export function noWhitespaceValidator(control: any) {
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChildren('messageElement') private messageElements!: QueryList<ElementRef>;
+  // We'll use this to find the textarea to reset its height
+  @ViewChild('chatTextarea') private chatTextarea!: ElementRef<HTMLTextAreaElement>;
 
   messages$: Observable<ChatMessage[]>;
   isLoading$: Observable<boolean>;
@@ -51,7 +53,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private location = inject(Location);
   private route = inject(ActivatedRoute);
   private currentChatId: string | null = null;
-  private messagesSubscription!: Subscription;
+  private routeSub!: Subscription;
+  private messagesSub!: Subscription;
+
+  // --- NEW: State for controlling scroll behavior ---
+  private scrollBehavior: ScrollLogicalPosition = 'start';
 
   promptSuggestions = [
     { title: "Smart Budget", description: "A budget that fits your lifestyle." },
@@ -70,21 +76,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Listen for changes to the URL's 'id' parameter
     this.route.paramMap.subscribe(params => {
-      const chatId = params.get('id');
+      const chatId = params.get('id'); // Get the 'id' from the URL
+
       if (chatId) {
-        this.currentChatId = chatId;
+        // We are in an existing chat.
+        // Dispatch the action to load its history.
         this.store.dispatch(ChatActions.loadChatHistory({ chatId }));
       } else {
-        // --- THIS IS THE FIX ---
-        // If there is no chat ID, we are in a new chat.
-        // Clear the previous chat's messages from the store.
-        this.currentChatId = null;
-        this.store.dispatch(ChatActions.loadChatHistorySuccess({ messages: [] }));
+        // We are on the "new chat" page (e.g., /chat).
+        // Dispatch the action to clear any "stuck" messages.
+        this.store.dispatch(ChatActions.clearActiveChat());
       }
     });
   }
 
+  /**
+   * --- NEW: Auto-grows the textarea up to 4 lines ---
+   */
   autoGrow(event: Event): void {
     const textarea = event.target as HTMLTextAreaElement;
     
@@ -92,11 +102,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     textarea.style.height = 'auto';
 
     const computedStyle = getComputedStyle(textarea);
-    // Calculate line-height, fallback to font-size * 1.2
     const lineHeight = parseFloat(computedStyle.lineHeight) || (parseFloat(computedStyle.fontSize) * 1.2);
     
     // Calculate max height for 4 lines
-    // We also need to account for padding
     const padding = parseFloat(computedStyle.paddingTop) + parseFloat(computedStyle.paddingBottom);
     const maxHeight = (lineHeight * 4) + padding;
 
@@ -112,50 +120,68 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // 💡 NEW: Subscribe to changes in the message list QueryList
-    // The scroll logic is now tied to when a new message element is added to the DOM.
-    this.messageElements.changes.subscribe((list: QueryList<ElementRef>) => {
-      // We only scroll if there are messages and the last one is the AI's response
+    // Store the subscription to unsubscribe OnDestroy
+    this.messagesSub = this.messageElements.changes.subscribe((list: QueryList<ElementRef>) => {
       if (list.length > 0) {
-        this.scrollToLastMessage();
+          this.scrollToLastMessage();
       }
     });
   }
 
   ngOnDestroy(): void {
-
+    // --- NEW: Clean up subscriptions ---
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
+    }
+    if (this.messagesSub) {
+      this.messagesSub.unsubscribe();
+    }
   }
 
   private scrollToLastMessage(): void {
-    // Use setTimeout to ensure DOM updates are complete (especially during streaming)
     setTimeout(() => {
       try {
         const elements = this.messageElements.toArray();
         if (elements.length > 0) {
-          // Get the last message element
           const lastElement = elements[elements.length - 1].nativeElement;
-
-          // Scroll the container to the top of the last message element
-          lastElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-          // If you still prefer scrolling the container itself to a position:
-          // this.chatContainer.nativeElement.scrollTop = lastElement.offsetTop - this.chatContainer.nativeElement.offsetTop;
+          
+          // --- UPDATED: Use the dynamic scroll behavior ---
+          lastElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: this.scrollBehavior // Use 'start' or 'end'
+          });
+          
+          // --- NEW: Reset behavior to 'start' ---
+          // After loading, all new messages (AI or user) should scroll to the start.
+          if (this.scrollBehavior === 'end') {
+            this.scrollBehavior = 'start';
+          }
         }
       } catch (err) {
-        // Safe to ignore if the element isn't ready.
+        // Safe to ignore
       }
-    }, 50); // Increased timeout slightly for reliable scrolling during streaming
+    }, 50);
   }
 
   sendMessage(): void {
     const message = this.chatForm.value.message?.trim();
     if (message) {
+      // REQ 2: When sending, set scroll to START
+      this.scrollBehavior = 'start';
       this.handleNewMessage(message);
       this.chatForm.reset();
+
+      // --- NEW: Reset textarea height ---
+      if (this.chatTextarea) {
+        this.chatTextarea.nativeElement.style.height = 'auto';
+        this.chatTextarea.nativeElement.style.overflowY = 'hidden';
+      }
     }
   }
 
   sendSuggestion(prompt: string): void {
+    // REQ 2: When sending, set scroll to START
+    this.scrollBehavior = 'start';
     this.handleNewMessage(prompt);
   }
 

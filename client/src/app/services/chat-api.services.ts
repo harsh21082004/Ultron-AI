@@ -1,92 +1,105 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatMessage } from '../store/chat/chat.state';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChatApiService {
-  // This is the URL for your Python FastAPI streaming backend
-  private apiUrl = 'http://localhost:8000/api/chat'; 
-
-  constructor(private http: HttpClient) { }
+  private http = inject(HttpClient);
+  // This is the URL for your FastAPI backend
+  private apiUrl = 'http://localhost:8000/api/chat';
 
   /**
-   * Connects to the streaming API and returns an Observable of message chunks.
-   * @param message The user's message to send to the backend.
-   * @param chatId The unique ID for the current chat session.
-   * @returns An Observable that emits each chunk of the AI's response.
+   * Helper for POST/PUT requests
    */
-
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
+    // Note: 'Content-Type' is set for HttpClient.
+    // fetch API sets its own content-type for JSON.
     return new HttpHeaders({
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     });
   }
 
   /**
-   * --- NEW METHOD ---
+   * Helper for fetch API, returns headers as an object
+   */
+  private getFetchAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
+  /**
+   * --- CORRECTED ---
+   * Sends the message AND the chatId to the streaming POST endpoint.
+   * This uses the fetch API to correctly handle a streaming POST response.
+   */
+  sendMessageStream(message: string, chatId: string): Observable<string> {
+
+    return new Observable(subscriber => {
+      const controller = new AbortController();
+
+      fetch(`${this.apiUrl}/stream`, {
+        method: 'POST',
+        headers: this.getFetchAuthHeaders(),
+        body: JSON.stringify({ message, chatId }), // Send both message and chatId
+        signal: controller.signal
+      }).then(async response => {
+        if (!response.ok) {
+          // Handle HTTP errors (like 4xx, 5xx)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        if (!response.body) {
+          throw new Error("No response body");
+        }
+
+        // Use TextDecoderStream to handle UTF-8 text chunks
+        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            subscriber.complete();
+            break;
+          }
+          // The service returns one token at a time
+          subscriber.next(value);
+        }
+      }).catch(err => {
+        if (err.name !== 'AbortError') {
+          subscriber.error(err);
+        }
+      });
+
+      // On unsubscribe (e.g., component destroyed), abort the fetch request
+      return () => controller.abort();
+    });
+  }
+
+  /**
    * Calls the FastAPI backend to generate a title for a given chat history.
-   * @param messages The array of all messages in the conversation.
-   * @returns An Observable that emits the title object: { title: string }.
    */
   generateTitle(messages: ChatMessage[]): Observable<{ title: string }> {
-    // This endpoint must match the new route you create in your FastAPI main.py
-    return this.http.post<{ title: string }>(`${this.apiUrl}/generate-title`, 
-      { messages }, 
+    return this.http.post<{ title: string }>(`${this.apiUrl}/generate-title`,
+      { messages },
       { headers: this.getAuthHeaders() }
     );
   }
 
-  sendMessageStream(message: string, chatId: string): Observable<string> {
-    return new Observable<string>(observer => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        observer.error('No authentication token found.');
-        return;
-      }
-
-      const postStream = async () => {
-        try {
-          // CORRECTED: The chatId is now correctly passed as a path parameter.
-          const response = await fetch(`${this.apiUrl}/stream`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'text/event-stream',
-              'Authorization': `Bearer ${token}` // Secure the request
-            },
-            body: JSON.stringify({ message }),
-          });
-
-          if (response.status === 401) {
-             throw new Error("Unauthorized: Invalid or expired token.");
-          }
-          if (!response.body) {
-            throw new Error("Response body is null");
-          }
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break; // The stream has finished
-            
-            const data = decoder.decode(value);
-            observer.next(data);
-          }
-          // When the loop finishes, the stream is complete.
-          observer.complete();
-        } catch (err) {
-          observer.error(err);
-        }
-      };
-
-      postStream();
-    });
+  /**
+   * Sends the full chat history to the FastAPI backend to hydrate the AI's memory.
+   */
+  hydrateHistory(chatId: string, messages: ChatMessage[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/hydrate-history`,
+      { chatId, messages },
+      { headers: this.getAuthHeaders() }
+    );
   }
 }
 

@@ -33,7 +33,7 @@ import { marked, Marked, Tokens } from 'marked';
       <ng-container [ngSwitch]="block.type">
         <div
           *ngSwitchCase="'text'"
-          class="prose text-black"
+          class="prose"
           [class.text-white]="isDarkMode()"
           [class.dark-prose]="isDarkMode()"
           [class.sender-prose]="sender === 'user'"

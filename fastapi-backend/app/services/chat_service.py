@@ -1,120 +1,177 @@
+# app/services/chat_service.py
 import os
-from dotenv import load_dotenv
+from functools import lru_cache
+from typing import List
+from collections import defaultdict
+import threading # For thread-safe session store
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 
-# Load environment variables from the .env file
-load_dotenv()
+from ..core.config import Settings, get_settings
+from ..models.chat_models import Message, ContentItem # Import our Pydantic model
 
-# --- MODEL INITIALIZATION ---
-
-def get_groq_model():
-    """Initializes and returns the Groq model."""
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY not found in .env file.")
-    return ChatGroq(
-        groq_api_key=api_key,
-        model_name="llama-3.3-70b-versatile",
-        temperature=0.7
-    )
-
-# --- MEMORY MANAGEMENT ---
-session_store = {}
-
-def get_session_history(session_id: str):
-    """Retrieves or creates a message history object for a given session ID."""
-    if session_id not in session_store:
-        session_store[session_id] = InMemoryChatMessageHistory()
-    return session_store[session_id]
-
-# --- PROMPT TEMPLATE ---
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful AI assistant named Ultron. Your goal is to be friendly, informative, and provide accurate answers based on the conversation history. Format tables using markdown with clear separators."),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "{input}"),
-])
-
-title_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful assistant. Your task is to generate a concise, 2-5 word title for the following conversation. Do not add any prefix like 'Title:'. Do not use quotes. Just return the plain text title."),
-    ("user", "{conversation_history}")
-])
-
-
-# --- CHAIN CREATION (Using modern LCEL syntax) ---
-model = get_groq_model()
-runnable = prompt | model
-
-title_chain = title_prompt | model
-
-chain_with_history = RunnableWithMessageHistory(
-    runnable,
-    get_session_history,
-    input_messages_key="input",
-    history_messages_key="chat_history",
-)
-
-
-# --- SERVICE FUNCTIONS ---
-
-async def generate_chat_title(messages: list) -> str:
+class ChatService:
     """
-    Generates a concise title for a chat history.
-    'messages' is the list of ChatMessage objects from the frontend.
+    Encapsulates all AI logic and state management for the chatbot.
+    This class is intended to be used as a singleton dependency.
     """
-    # 1. Format the message list from the frontend into a simple string
-    conversation_str = ""
-    for msg in messages:
-        sender = "User" if msg.get('sender') == 'user' else "AI"
-        # Combine all content blocks into one string for this message
-        content = " ".join([block.get('value', '') for block in msg.get('content', []) if block.get('type') == 'text'])
-        conversation_str += f"{sender}: {content}\n"
-    
-    if not conversation_str.strip():
-        return "New Chat" # Fallback if history is empty
 
-    # 2. Invoke the title chain
-    # .ainvoke() returns a BaseMessage (like AIMessage)
-    try:
-        response_message = await title_chain.ainvoke({"conversation_history": conversation_str})
-        # Clean up the title, remove quotes or extra newlines
-        title = response_message.content.strip().replace('"', '').split('\n')[0]
-        return title if title else "New Chat"
-    except Exception as e:
-        print(f"Error generating title: {e}")
-        return "New Chat" # Fallback
+    def __init__(self, settings: Settings):
+        """
+        Initializes the service, loading models and prompts once.
+        """
+        if not settings.GROQ_API_KEY:
+            raise ValueError("GROQ_API_KEY not found in settings.")
+            
+        # --- 1. Initialize the AI Model ---
+        self.model = ChatGroq(
+            groq_api_key=settings.GROQ_API_KEY,
+            model_name="llama-3.3-70b-versatile", 
+            temperature=0.7
+        )
 
-async def stream_groq_message(message: str, session_id: str):
-    """
-    Streams the Groq response token by token without any
-    backend buffering.
-    """
-    config = {"configurable": {"session_id": session_id}}
+        # --- 2. Define Core Prompt ---
+        self.core_prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful AI assistant named Ultron. Your goal is to be friendly, informative, and provide accurate answers based on the conversation history. Format tables using markdown with clear separators."),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}"),
+        ])
 
-    async for chunk in chain_with_history.astream({"input": message}, config=config):
-        # Directly yield the content of the chunk.
-        # The frontend will handle parsing and buffering.
-        token = chunk.content if isinstance(chunk, AIMessage) else str(chunk)
-        if token:
-            yield token
+        # --- 3. Define Title Generation Prompt ---
+        self.title_prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful assistant. Your task is to generate a concise, 2-5 word title for the following conversation. Do not add any prefix like 'Title:'. Do not use quotes. Just return the plain text title."),
+            ("user", "{conversation_history}")
+        ])
 
+        # --- 4. Create Chains ---
+        self.title_chain = self.title_prompt | self.model
+        
+        # The core runnable chain
+        runnable = self.core_prompt | self.model
 
-def get_chat_history(session_id: str):
-    """
-    Retrieves the message history and formats it for the frontend.
-    """
-    if session_id in session_store:
-        history = get_session_history(session_id)
+        # --- 5. Initialize Thread-Safe Session Store ---
+        # A simple global dict is NOT production-ready.
+        # It's not thread-safe and won't work with multiple server workers.
+        # A defaultdict is a cleaner in-memory store.
+        # For true production, this should be a Redis or SQL backend.
+        self.session_store = defaultdict(InMemoryChatMessageHistory)
+        self.store_lock = threading.Lock() # To safely clear history
+
+        # --- 6. Create the main chain with history ---
+        self.chain_with_history = RunnableWithMessageHistory(
+            runnable,
+            self.get_session_history, # Pass the *method* as the factory
+            input_messages_key="input",
+            history_messages_key="chat_history",
+        )
+
+    def get_session_history(self, session_id: str) -> InMemoryChatMessageHistory:
+        """
+        Retrieves the message history for a given session ID.
+        Uses defaultdict to automatically create a new history if one doesn't exist.
+        """
+        return self.session_store[session_id]
+
+    async def hydrate_chat_history(self, session_id: str, messages: List[Message]):
+        """
+        Loads a chat history from the frontend into the AI's session memory.
+        """
+        with self.store_lock:
+            history = self.get_session_history(session_id)
+            history.clear()
+
+            for msg in messages:
+                # --- CHANGED: Extract simple text from the content list ---
+                text_content = ""
+                for item in msg.content:
+                    if item.type == 'text':
+                        text_content = item.value
+                        break # Found the text, stop looking
+                
+                if not text_content:
+                    continue # Skip messages with no text content
+
+                if msg.sender == 'user':
+                    history.add_message(HumanMessage(content=text_content))
+                elif msg.sender == 'ai':
+                    history.add_message(AIMessage(content=text_content))
+
+    def get_chat_history(self, session_id: str) -> List[Message]:
+        """
+        Retrieves the message history and formats it using our Pydantic model.
+        """
+        history = self.get_session_history(session_id)
         formatted_messages = []
         for msg in history.messages:
-            if msg.type == "human":
-                 formatted_messages.append({"sender": "user", "content": [{"type": "text", "value": msg.content}]})
-            elif msg.type == "ai":
-                 formatted_messages.append({"sender": "ai", "content": [{"type": "text", "value": msg.content}]})
+            
+            # --- CHANGED: Wrap the simple string back into the complex List[ContentItem] ---
+            # This is the reverse of hydrate_chat_history
+            content_list = [ContentItem(type="text", value=msg.content)]
+            
+            if isinstance(msg, HumanMessage):
+                formatted_messages.append(Message(sender="user", content=content_list))
+            elif isinstance(msg, AIMessage):
+                formatted_messages.append(Message(sender="ai", content=content_list))
         return formatted_messages
-    return []
 
+    async def stream_groq_message(self, message: str, session_id: str):
+        """
+        Streams the Groq response token by token.
+        """
+        config = {"configurable": {"session_id": session_id}}
+        
+        async for chunk in self.chain_with_history.astream({"input": message}, config=config):
+            # chunk is an AIMessageChunk object
+            if chunk.content:
+                yield chunk.content
+
+    async def generate_chat_title(self, messages: List[Message]) -> str:
+        """
+        Generates a concise title for a chat history.
+        """
+        print(messages)
+        
+        # --- CHANGED: Extract simple text for the prompt string ---
+        conversation_parts = []
+        for msg in messages:
+            text_content = ""
+            for item in msg.content:
+                if item.type == 'text':
+                    text_content = item.value
+                    break
+            
+            if text_content:
+                conversation_parts.append(f"{msg.sender}: {text_content}")
+        
+        conversation_str = "\n".join(conversation_parts)
+        # --- End of change ---
+        
+        if not conversation_str.strip():
+            return "New Chat"
+
+        try:
+            response_message = await self.title_chain.ainvoke({"conversation_history": conversation_str})
+            title = response_message.content.strip().replace('"', '').split('\n')[0]
+            return title if title else "New Chat"
+        except Exception as e:
+            print(f"Error generating title: {e}")
+            return "New Chat"
+
+# --- Singleton Dependency ---
+# This part is crucial for FastAPI.
+# We create one instance of the service when the app starts.
+
+@lru_cache()
+def get_chat_service() -> ChatService:
+    """
+    Dependency injector function.
+    
+    Using lru_cache ensures that ChatService is initialized only ONCE,
+    creating a singleton instance.
+    """
+    settings = get_settings()
+    return ChatService(settings)

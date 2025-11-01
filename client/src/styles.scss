@@ -2,8 +2,10 @@
 @use "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Alan+Sans:wght@300..900&display=swap');
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
-  @include mat.theme((color: (primary: mat.$rose-palette,
+  @include mat.theme((color: (primary: mat.$azure-palette,
         tertiary: mat.$red-palette,
       ),
       typography: Roboto,
@@ -13,29 +15,31 @@ html {
 }
 
 $light-theme: mat.define-theme((color: (theme-type: light,
-        primary: mat.$rose-palette,
-        tertiary: mat.$red-palette,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
       ),
     ));
 
 $dark-theme: mat.define-theme((color: (theme-type: dark,
-        primary: mat.$rose-palette,
-        tertiary: mat.$red-palette,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
       ),
     ));
 @include mat.all-component-themes($light-theme);
 
 html.dark {
   $dark-component-background: #162731;
-  $light-text-color: white;
+  $light-text-color: #d3e3fd;
 
   --mat-menu-container-color: #{$dark-component-background} !important;
 
   --mat-sys-on-surface: #{$light-text-color};
 
-  --mat-sys-color-on-surface: #ba005c !important;
+  --mat-sys-color-on-surface: #d3e3fd !important;
 
-  --mat-icon-button-icon-color: #ffb1c5 !important;
+  --mat-icon-button-icon-color: #d3e3fd !important;
+
+  --mat-button-text-label-text-color: #d3e3fd !important;
 
   // Apply the dark theme for all components
   @include mat.all-component-themes($dark-theme);
@@ -49,7 +53,11 @@ html{
 
   --mat-menu-container-color: #{$light-component-background};
 
-  --mat-icon-button-icon-color: #ba005c;
+  --mat-icon-button-icon-color: #1b1c1d;
+
+  --gem-sys-color--on-surface: #1b1c1d;
+
+  --mat-button-text-label-text-color: #1b1c1d;
 
 }
 
@@ -57,7 +65,7 @@ body {
   // Default the application to a light color theme. This can be changed to
   // `dark` to enable the dark color theme, or to `light dark` to defer to the
   // user's system settings.
-  color-scheme: light;
+  color-scheme: light dark;
 
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these

@@ -14,6 +14,11 @@ export const chatReducer = createReducer(
     messages: [], // Clear old messages while loading history
   })),
 
+  on(ChatActions.clearActiveChat, (state) => ({
+    ...initialChatState,       // Reset to the default empty state
+    chatList: state.chatList, // IMPORTANT: Keep the chat list that's already loaded
+  })),
+
   // This handles the successful response from the API.
   on(ChatActions.loadChatHistorySuccess, (state, { messages }) => ({
     ...state,

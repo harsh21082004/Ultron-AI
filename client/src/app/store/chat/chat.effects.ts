@@ -25,8 +25,8 @@ export class ChatEffects {
       ofType(ChatActions.loadChatHistory),
       switchMap(action =>
         this.chatDbService.getChatHistory(action.chatId).pipe(
-          map(messages => ChatActions.loadChatHistorySuccess({ messages })),
-          catchError(error => of(ChatActions.loadChatHistoryFailure({ error: error.message })))
+          map(messages => ChatActions.loadChatHistorySuccess({ chatId: action.chatId, messages })),
+          catchError(error => of(ChatActions.loadChatHistoryFailure({ chatId: action.chatId, error: error.message })))
         )
       )
     );
@@ -59,6 +59,20 @@ export class ChatEffects {
     )
   });
 
+  hydrateAiMemory$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(ChatActions.loadChatHistorySuccess),
+      // Only hydrate if there are messages to send
+      filter(action => !!action.chatId && action.messages.length > 0),
+      switchMap(action =>
+        this.chatApiService.hydrateHistory(action.chatId, action.messages).pipe(
+          map(() => ChatActions.hydrateHistorySuccess()),
+          catchError(error => of(ChatActions.hydrateHistoryFailure({ error: error.message })))
+        )
+      )
+    );
+  });
+
   /**
    * Effect to save the completed chat history TO THE EXPRESS BACKEND.
    */
@@ -74,13 +88,16 @@ export class ChatEffects {
           return of(ChatActions.saveChatHistoryFailure({ error: 'Missing data to save chat.' }));
         }
 
+        console.log(messages)
+        
+
         // --- NEW STEP 1: Call FastAPI to generate a title ---
         return this.chatApiService.generateTitle(messages).pipe(
           switchMap(titleResponse => {
             // --- NEW STEP 2: Use the AI title to save to the DB ---
             const aiTitle = titleResponse.title || 'New Chat'; // Use response or fallback
             return this.chatDbService.saveChat(chatId, messages, aiTitle).pipe(
-              map(() => ChatActions.saveChatHistorySuccess()),
+              map(() => ChatActions.saveChatHistorySuccess({ chatId, newTitle: aiTitle })),
               catchError(error => of(ChatActions.saveChatHistoryFailure({ error: error.message })))
             );
           }),
@@ -95,7 +112,7 @@ export class ChatEffects {
             const defaultTitle = (firstTextContent?.value as string)?.substring(0, 50) || 'New Chat';
 
             return this.chatDbService.saveChat(chatId, messages, defaultTitle).pipe(
-              map(() => ChatActions.saveChatHistorySuccess()),
+              map(() => ChatActions.saveChatHistorySuccess({ chatId, newTitle: defaultTitle })),
               catchError(dbError => of(ChatActions.saveChatHistoryFailure({ error: dbError.message })))
             );
           })

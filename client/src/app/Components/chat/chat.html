@@ -10,16 +10,6 @@
 
     <!-- This inner div is for centering the content -->
     <div class="w-full max-w-4xl mx-auto p-6 space-y-6">
-
-      <!-- Loading indicator -->
-      @if (isLoading$ | async) {
-      <div class="flex flex-col items-center justify-center h-full text-center">
-        <div
-          class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center font-bold text-sm flex-shrink-0 animate-spin">
-        </div>
-        <p class="mt-4 text-gray-500 dark:text-gray-400">Loading conversation...</p>
-      </div>
-      } @else {
       <!-- Welcome screen or chat messages -->
       @if (messages.length === 0) {
       <div class="flex flex-col items-center justify-center h-full text-center">
@@ -31,7 +21,7 @@
         } @else {
         <h1 class="text-4xl font-bold text-black dark:text-gray-100">Good Evening.</h1>
         }
-        <h2 class="text-3xl font-semibold text-gray-500 dark:text-gray-400 mt-2">Can I help you with anything?</h2>
+        <h2 class="text-3xl font-semibold mt-2">Can I help you with anything?</h2>
       </div>
       } @else {
       <!-- Chat messages -->
@@ -59,11 +49,11 @@
                   'rounded-t-2xl rounded-br-2xl rounded-bl-md': message.sender === 'ai'
                 }" [ngStyle]="message.sender === 'ai' ? {'background-color': 'transparent !important'} : null">
           @for (block of message.content; track $index) {
-          <app-content-renderer [content]="block.value" [sender]="message.sender" class="text-base"></app-content-renderer>
+          <app-content-renderer [content]="block.value" [sender]="message.sender"
+            class="text-base"></app-content-renderer>
           }
         </div>
       </div>
-      }
       }
       }
     </div>
@@ -75,9 +65,9 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mt-4">
       @for (prompt of promptSuggestions; track prompt.title) {
       <button (click)="sendSuggestion(prompt.title)"
-        class="bg-gray-100 dark:bg-[#1C1D21] p-4 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 text-left">
-        <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-sm">{{ prompt.title }}</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ prompt.description }}</p>
+        class="bg-gray-100 dark:bg-[#162731] p-4 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors border border-gray-300 dark:border-gray-700 text-left">
+        <h3 class="font-semibold text-sm">{{ prompt.title }}</h3>
+        <p class="text-xs mt-1">{{ prompt.description }}</p>
       </button>
       }
     </div>
@@ -85,25 +75,22 @@
 
     <form [formGroup]="chatForm" (ngSubmit)="sendMessage()" class="chat-input-content rounded-2xl p-2 mt-4">
       <textarea formControlName="message" rows="1" placeholder="Message AI Chat..."
-        class="w-full bg-transparent resize-none py-2 px-4 text-black dark:text-white placeholder-gray-500 focus:outline-none"
+        class="w-full bg-transparent resize-none py-2 px-4 placeholder-gray-500 focus:outline-none"
         (keydown)="handleEnterPress($event)" (input)="autoGrow($event)"></textarea>
       <div class="flex items-center justify-between mt-2">
         <div class="flex items-center gap-2">
-          <button type="button" mat-stroked-button
-            class="text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
             <mat-icon>mic</mat-icon>
           </button>
-          <button type="button" mat-stroked-button
-            class="text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
             <mat-icon>add_photo_alternate</mat-icon> Create an Image
           </button>
-          <button type="button" mat-stroked-button
-            class="text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
             <mat-icon>search</mat-icon> Search the web
           </button>
         </div>
         <button type="submit" mat-fab
-          class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-pink-600 disabled:bg-gray-300 dark:disabled:bg-gray-800"
+          class="bg-gray-200 dark:bg-gray-700 hover:bg-pink-600 disabled:bg-gray-300 dark:disabled:bg-gray-800"
           [disabled]="chatForm.invalid || (isLoading$ | async)" aria-label="Send message">
           <mat-icon>arrow_forward</mat-icon>
         </button>
