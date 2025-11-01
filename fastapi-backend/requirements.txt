@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
-langchain
-langchain-groq
 langchain-core
+langchain-groq
 python-dotenv
+pydantic
+pydantic-settings
