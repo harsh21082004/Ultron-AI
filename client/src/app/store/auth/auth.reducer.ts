@@ -1,61 +1,67 @@
 import { createReducer, on } from '@ngrx/store';
 import * as AuthActions from './auth.actions';
-import { User } from '../../models/user.model';
-
-export interface AuthState {
-  user: User | null;
-  loading: boolean;
-  error: string | null;
-}
-
-export const initialAuthState: AuthState = {
-  user: null,
-  loading: false,
-  error: null,
-};
-
-export const initialState: AuthState = {
-  user: null,
-  loading: false,
-  error: null,
-};
+import { AuthState, initialAuthState } from './auth.state';
 
 export const authReducer = createReducer(
-  initialState,
-  on(AuthActions.signup, (state) => ({
+  initialAuthState, // Use the imported initial state
+
+  // --- LOADING/FAILURE HANDLERS ---
+
+  // Set loading true for all starting actions
+  on(
+    AuthActions.initSession, 
+    AuthActions.signup, 
+    AuthActions.login, 
+    AuthActions.loginWithGoogle, 
+    AuthActions.loginWithGitHub,
+    (state) => ({
     ...state,
     loading: true,
     error: null,
   })),
-  on(AuthActions.signupSuccess, (state, { user }) => ({
-    ...state,
-    user,
-    loading: false,
-    error: null,
-  })),
-  on(AuthActions.signupFailure, (state, { error }) => ({
+
+  // Handle all failures
+  on(
+    AuthActions.signupFailure, 
+    AuthActions.loginFailure, 
+    (state, { error }) => ({
     ...state,
     user: null,
     loading: false,
     error,
   })),
-  on(AuthActions.login, (state) => ({
-    ...state,
-    loading: true,
-    error: null,
+
+  // Handle session init failure (resets to initial state)
+  on(AuthActions.initSessionFailure, (state) => ({
+    ...initialAuthState
   })),
-  on(AuthActions.loginSuccess, (state, { user }) => ({
+
+  // --- SUCCESS HANDLERS ---
+
+  // All successful auth actions land here
+  on(
+    AuthActions.initSessionSuccess, 
+    AuthActions.signupSuccess, 
+    AuthActions.loginSuccess, 
+    (state, { user }) => ({
     ...state,
     user,
     loading: false,
     error: null,
   })),
-  on(AuthActions.loginFailure, (state, { error }) => ({
+
+  // --- LOGOUT ---
+  on(AuthActions.logout, (state) => ({
     ...state,
-    user: null,
-    loading: false,
-    error,
+    loading: true, // Set loading true while logout happens
   })),
+  
+  on(AuthActions.logoutSuccess, (state) => ({
+    ...initialAuthState, // Reset to initial state on logout success
+  })),
+
+  // Your getUserDetails actions are implicitly handled by the
+  // 'initSession' handlers if you re-use them, or you can add:
   on(AuthActions.getUserDetails, (state) => ({
     ...state,
     loading: true,
@@ -69,33 +75,7 @@ export const authReducer = createReducer(
   })),
   on(AuthActions.getUserDetailsFailure, (state, { error }) => ({
     ...state,
-    user: null,
-    loading: false,
+    loading: false, // Don't log out, just set error
     error,
-  })),
-  on(AuthActions.logout, (state) => ({
-    ...state,
-  })),
-  on(AuthActions.logoutSuccess, (state) => ({
-    ...state,
-    user: null,
-    loading: false,
-    error: null,
-  })),
-  on(AuthActions.initSession, AuthActions.signup, AuthActions.login, AuthActions.loginWithGoogle, AuthActions.loginWithGitHub, (state) => ({
-    ...state,
-    loading: true,
-    error: null,
-  })),
-
-  // --- Successful Authentication ---
-  // When a session is initialized or a login/signup succeeds, store the user.
-  on(AuthActions.initSessionSuccess, AuthActions.signupSuccess, AuthActions.loginSuccess, (state, { user }) => ({
-    ...state,
-    user,
-    loading: false,
-  })),
-  on(AuthActions.initSessionFailure, (state) => ({
-    ...initialAuthState
-  })),
+  }))
 );

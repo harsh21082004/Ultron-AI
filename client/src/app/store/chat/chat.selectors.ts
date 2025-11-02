@@ -22,3 +22,8 @@ export const selectChatError = createSelector(
   selectChatState,
   (state) => state.error
 );
+
+export const selectCurrentChatId = createSelector(
+  selectChatState,
+  (state) => state.currentChatId
+)

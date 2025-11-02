@@ -13,7 +13,6 @@ const saveChat = async (req, res) => {
     }
 
     // Find and update using the chatId from the frontend as the document's _id.
-    console.log(chatId)
     const updatedChat = await Chat.findOneAndUpdate(
       { _id: chatId, userId: userId }, // Query by document _id and owner's userId
       { 
@@ -44,7 +43,6 @@ const saveChat = async (req, res) => {
 const getAllChats = async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log(userId)
         // Find all chats for the user, but only select the title and _id fields.
         // Sort by the most recently updated.
         const chats = await Chat.find({ userId: userId })

@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { User } from '../../models/user.model';
+import { User } from '../../shared/models/user.model';
 
 // --- OAUTH ACTIONS ---
 export const loginWithGoogle = createAction('[Auth] Login with Google');
@@ -7,10 +7,12 @@ export const loginWithGitHub = createAction('[Auth] Login with GitHub');
 
 // --- SESSION INITIALIZATION ---
 export const initSession = createAction('[Auth] Init Session');
+
 export const initSessionSuccess = createAction(
   '[Auth] Init Session Success',
   props<{ user: User }>()
 );
+
 export const initSessionFailure = createAction('[Auth] Init Session Failure');
 
 
@@ -21,6 +23,7 @@ export const signup = createAction(
 
 export const signupSuccess = createAction(
   '[Auth] Signup Success',
+  // --- CORRECTED: This should match loginSuccess ---
   props<{ user: User }>()
 );
 
@@ -45,22 +48,21 @@ export const loginFailure = createAction(
 );
 
 // --- LOGOUT ---
-// This action starts the logout process.
 export const logout = createAction('[Auth] Logout');
-
-// This action is dispatched by the effect after logout is complete.
 export const logoutSuccess = createAction('[Auth] Logout Success');
 
 
+// --- GET USER DETAILS (for re-hydrating session) ---
+// Note: This is different from initSession. 
+// This action is what 'initSession' *uses*.
 export const getUserDetails = createAction(
   '[Auth] Get User Details',
   props<{ token: string }>()
 );
 
-
 export const getUserDetailsSuccess = createAction(
   '[Auth] Get User Details Success',
-  props<{ user: User }>()
+  props<{ user: User }>() 
 );
 
 export const getUserDetailsFailure = createAction(

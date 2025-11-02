@@ -6,9 +6,9 @@ import { Store } from '@ngrx/store';
 import * as ChatActions from './chat.actions';
 import { AppState } from '..';
 import { selectChatMessages } from './chat.selectors';
-import { ChatApiService } from '../../services/chat-api.services';
-import { ChatDbService } from '../../services/chat-db.service';
 import { selectAuthUser } from '../auth/auth.selectors';
+import { ChatApiService } from '../../core/services/chat-api.services';
+import { ChatDbService } from '../../core/services/chat-db.service';
 
 @Injectable()
 export class ChatEffects {

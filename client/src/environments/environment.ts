@@ -1,4 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://localhost:3000/api/auth'
+    apiUrl: 'http://localhost:3000/api/auth',
+    fastApiUrl: 'http://localhost:8000/api/chat'
 };

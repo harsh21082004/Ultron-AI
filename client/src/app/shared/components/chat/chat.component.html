@@ -1,0 +1,161 @@
+<!-- This outer check resolves the 'messages' object once, fixing strict template errors -->
+@if (messages$ | async; as messages) {
+<!-- Main container now supports light and dark themes -->
+<div class="flex flex-col h-full w-full text-gray-800 dark:text-white">
+
+  <app-header-component></app-header-component>
+
+  <!-- This container holds the scrolling chat messages -->
+  <div #chatContainer class="flex-grow w-full chat-container overflow-y-auto">
+
+    <!-- This inner div is for centering the content -->
+    <div class="w-full max-w-4xl mx-auto p-6 space-y-6">
+      <!-- Welcome screen or chat messages -->
+      @if (messages.length === 0 && !(isLoading$ | async)) {
+      <div class="flex flex-col items-center justify-center h-full text-center">
+        <div
+          class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-blue-400 mb-6 shadow-2xl animate-pulse">
+        </div>
+        @if (user$ | async; as user) {
+        <h1 class="text-4xl font-bold text-black dark:text-white">Good Evening, {{ user.name }}.</h1>
+        } @else {
+        <h1 class="text-4xl font-bold text-black dark:text-gray-100">Good Evening.</h1>
+        }
+        <h2 class="text-3xl font-semibold mt-2">Can I help you with anything?</h2>
+      </div>
+      } @else {
+      <!-- 
+        --- MODIFIED: ---
+        1. Using 'track trackByMessage' for performance
+        2. Added '[@messageAnimation]' for fade-in effect
+      -->
+      @for (message of messages; track message._id){
+      <div #messageElement 
+           class="flex items-start gap-2 group" 
+           [class.justify-end]="message.sender === 'user'"
+           [class.flex-col]="message.sender === 'ai'" [class.items-start]="message.sender === 'ai'">
+
+        <!-- 
+          --- NEW: Edit/Copy buttons for User Messages ---
+          These buttons appear on the left on hover
+        -->
+        @if (message.sender === 'user') {
+        <div class="flex-shrink-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
+          <button mat-icon-button matTooltip="Edit Message" (click)="onEditMessage(message)"
+            class="w-5 h-5 leading-5 flex justify-center items-center">
+            <mat-icon class="text-gray-500 dark:text-gray-400 justify-center items-center" style="font-size: 17px; display: flex !important;">edit</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Copy Text" (click)="onCopyMessage(message)"
+            class="w-5 h-5 leading-5 flex justify-center items-center">
+            <mat-icon class="text-gray-500 dark:text-gray-400 justify-center items-center" style="font-size: 17px; display: flex !important;">content_copy</mat-icon>
+          </button>
+        </div>
+        }
+
+        <!-- ORIGINAL AI Block -->
+        @if (message.sender === 'ai') {
+        <div class="relative w-full h-11 flex-shrink-0 flex items-center">
+          @if (message.isStreaming) {
+          <div class="absolute w-auto h-full">
+            <ultron-loader-component class="h-full w-auto flex"></ultron-loader-component>
+          </div>
+          <span class="ml-14 ">Thinking...</span>
+          }
+          <div
+            class="absolute inset-0 w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm ai-response">
+            <img src="assets/images/logo.svg" alt="">
+          </div>
+        </div>
+        }
+
+        <!-- ORIGINAL Message Bubble -->
+        <div class="max-w-2xl py-2 px-4 "  [ngClass]="{
+                  'user-bubble': message.sender === 'user',
+                  'rounded-t-2xl rounded-br-2xl rounded-bl-md': message.sender === 'ai'
+                }" [ngStyle]="message.sender === 'ai' ? {'background-color': 'transparent !important'} : null">
+          @for (block of message.content; track $index) {
+          <!-- Make sure your selector matches your component (e.g., app-content-renderer-component) -->
+          <app-content-renderer-component [content]="block.value"[sender]="message.sender"
+            class="text-base"></app-content-renderer-component>
+          }
+          <!-- 
+            --- NEW: AI Toolbar ---
+          -->
+          @if (message.sender === 'ai') {
+          <div class="flex-shrink-0 flex group-hover:opacity-100 transition-opacity" 
+               [class.opacity-0]="messages[messages.length - 1]._id !== message._id && !message.isStreaming">
+            <button mat-icon-button matTooltip="Good Response"
+              class="w-5 h-5 leading-5 flex justify-center items-center">
+              <mat-icon class="text-gray-500 dark:text-gray-400 flex justify-center items-center" style="font-size: 17px; display: flex !important;">thumb_up</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Bad Response"
+              class="w-5 h-5 leading-5 flex justify-center items-center">
+              <mat-icon class="text-gray-500 dark:text-gray-400 flex justify-center items-center" style="font-size: 17px; display: flex !important;">thumb_down</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Copy Text" (click)="onCopyMessage(message)"
+              class="w-5 h-5 leading-5 flex justify-center items-center">
+              <mat-icon class="text-gray-500 dark:text-gray-400 flex justify-center items-center" style="font-size: 17px; display: flex !important;">content_copy</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Share"
+              class="w-5 h-5 leading-5 flex justify-center items-center">
+              <mat-icon class="text-gray-500 dark:text-gray-400 flex justify-center items-center" style="font-size: 17px; display: flex !important;">share</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="More"
+              class="w-5 h-5 leading-5 flex justify-center items-center">
+              <mat-icon class="text-gray-500 dark:text-gray-400 flex justify-center items-center" style="font-size: 17px; display: flex !important;">more_vert</mat-icon>
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+      }
+      }
+    </div>
+  </div>
+
+  <!-- Chat Input Area -->
+  <div class="w-full max-w-4xl mx-auto p-4 pt-0">
+    @if ((messages.length === 0) && !(isLoading$ | async)) {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left mt-4">
+      @for (prompt of promptSuggestions; track prompt.title) {
+      <button (click)="sendSuggestion(prompt.title)"
+        class="bg-gray-100 dark:bg-[#162731] p-4 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors border border-gray-300 dark:border-gray-700 text-left">
+        <h3 class="font-semibold text-sm">{{ prompt.title }}</h3>
+        <p class="text-xs mt-1">{{ prompt.description }}</p>
+      </button>
+      }
+    </div>
+    }
+
+    <form [formGroup]="chatForm" (ngSubmit)="sendMessage()" class="chat-input-content rounded-2xl p-2 mt-4">
+      <!-- 
+        --- MODIFIED: ---
+        1. Added '#chatTextarea' template reference
+        2. Added 'appAutoGrow' directive
+      -->
+      <textarea #chatTextarea formControlName="message" rows="1" placeholder="Message AI Chat..."
+        class="w-full textarea bg-transparent resize-none py-2 px-4 placeholder-gray-500 focus:outline-none"
+        (keydown)="handleEnterPress($event)" appAutoGrow [appAutoGrowMaxLines]="4"></textarea>
+
+      <div class="flex items-center justify-between mt-2">
+        <div class="flex items-center gap-2">
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
+            <mat-icon>mic</mat-icon>
+          </button>
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
+            <mat-icon>add_photo_alternate</mat-icon> Create an Image
+          </button>
+          <button type="button" mat-stroked-button class="border-gray-300 dark:border-gray-600">
+            <mat-icon>search</mat-icon> Search the web
+          </button>
+        </div>
+        <button type="submit" matMiniFab
+          class="bg-gray-200 dark:bg-gray-700 hover:bg-pink-600 disabled:bg-gray-300 dark:disabled:bg-gray-800"
+          [disabled]="chatForm.invalid || (isLoading$ | async)" aria-label="Send message">
+          <img src="assets/images/send.svg" alt="">
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+}

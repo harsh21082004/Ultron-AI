@@ -1,4 +1,4 @@
-import { User } from "../../models/user.model";
+import { User } from "../../shared/models/user.model";
 
 export interface AuthState {
   user: User | null;      // Holds the authenticated user object, or null if not logged in.

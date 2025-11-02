@@ -27,3 +27,8 @@ export const selectIsAuthenticated = createSelector(
   selectAuthUser,
   (user) => !!user
 );
+
+export const selectAuthToken = createSelector(
+  selectAuthUser,
+  (user) => user ? user.token : null
+)

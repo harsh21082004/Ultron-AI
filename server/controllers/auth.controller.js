@@ -90,7 +90,6 @@ const getUserDetails = async (req, res) => {
     try {
         // Use middleware to get user from token
         const userDetails = req.user;
-        console.log(userDetails)
         res.status(200).json(userDetails);
     }catch(error){
         res.status(500).json({ message: 'Server error', error: error.message });

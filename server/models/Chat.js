@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+// This schema is correct.
 const ContentBlockSchema = new Schema({
     type: {
         type: String,
@@ -11,11 +12,15 @@ const ContentBlockSchema = new Schema({
         type: Schema.Types.Mixed,
         required: true
     }
-}, { _id: false }); // <--- Good: Disables _id for ContentBlock
+}, { _id: false });
 
+
+// --- THIS IS THE FIX ---
 const MessageSchema = new Schema({ 
-    // You'll need to send the UUID from the frontend in your message object, 
-    // but we'll prevent Mongoose from trying to cast it to ObjectId.
+    _id: { // 1. ADD this field
+        type: String, // 2. Set type to String
+        required: true,
+    },
     sender: {
         type: String,
         required: true,
@@ -24,12 +29,14 @@ const MessageSchema = new Schema({
     content: [ContentBlockSchema]
 }, { 
     timestamps: true,
-    _id: false // <--- 💡 SOLUTION: Disable _id generation/casting for MessageSchema
+    // _id: false // 3. REMOVE this line
 });
+// --- END OF FIX ---
+
 
 const ChatSchema = new Schema({
     _id: {
-        type: String, // Chat _id is correctly defined as String (UUID)
+        type: String, // This is correct (for the Chat ID)
         required: true,
     },
     userId: {
@@ -42,7 +49,7 @@ const ChatSchema = new Schema({
         required: true,
         trim: true
     },
-    messages: [MessageSchema]
+    messages: [MessageSchema] // This will now use the corrected MessageSchema
 }, { 
     timestamps: true,
     versionKey: false 
