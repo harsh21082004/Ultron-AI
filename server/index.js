@@ -13,7 +13,14 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+//add cors options for production and development
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    optionsSuccessStatus: 200,
+
+    credentials: true,
+
+}
 
 app.use(express.json());
 
