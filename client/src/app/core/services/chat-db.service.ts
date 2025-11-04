@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatMessage } from '../../store/chat/chat.state';
+import { environment } from '../../../environments/environment';
+import { envType } from '../../shared/models/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChatDbService {
   // This is the URL for your Node.js/Express backend
-  private apiUrl = 'http://localhost:3000/api/chats'; 
+  private apiUrl: string = (environment as envType).apiUrl;
 
   constructor(private http: HttpClient) { }
 

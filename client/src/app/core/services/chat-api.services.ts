@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChatMessage } from '../../store/chat/chat.state';
+import { environment } from '../../../environments/environment';
+import { envType } from '../../shared/models/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +11,7 @@ import { ChatMessage } from '../../store/chat/chat.state';
 export class ChatApiService {
   private http = inject(HttpClient);
   // This is the URL for your FastAPI backend
-  private apiUrl = 'http://localhost:8000/api/chat';
+  private apiUrl: string = (environment as envType).fastApiUrl;
 
   /**
    * Helper for POST/PUT requests
