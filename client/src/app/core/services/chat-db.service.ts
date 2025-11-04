@@ -10,7 +10,7 @@ import { envType } from '../../shared/models/environment';
 })
 export class ChatDbService {
   // This is the URL for your Node.js/Express backend
-  private apiUrl: string = (environment as envType).apiUrl;
+  private apiUrl: string = `${(environment as envType).apiUrl}/chat`;
 
   constructor(private http: HttpClient) { }
 

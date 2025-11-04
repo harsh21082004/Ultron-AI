@@ -17,11 +17,7 @@ export class AuthService {
   private router = inject(Router);
 
   // Use the API URL from your environment file
-  private apiUrl: string = (environment as envType).apiUrl;
-
-  constructor() {
-    console.log(`AuthService initialized with API URL: ${this.apiUrl}`);
-  }
+  private apiUrl: string = `${(environment as envType).apiUrl}/auth`;
 
   // --- OAuth Methods ---
 
