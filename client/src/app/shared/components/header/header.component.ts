@@ -36,6 +36,7 @@ export class HeaderComponent {
   dark_mode = 'bedtime';
 
   user$ : Observable<User | null>;
+  loading$ : Observable<Boolean>;
 
   private loadingService = inject(LoadingService);
   isLoading = this.loadingService.isLoading; 
@@ -43,6 +44,7 @@ export class HeaderComponent {
   // Inject the service to use it in the template
   constructor(public themeService: ThemeService, private store: Store<AppState>) {
     this.user$ = this.store.select(state => state.auth.user);
+    this.loading$ = this.store.select(state => state.auth.loading);
   }
   // A computed signal to easily check if the current mode is dark
   isDarkMode = computed(() => this.themeService.currentTheme() === 'dark');

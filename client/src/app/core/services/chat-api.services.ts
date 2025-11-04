@@ -11,7 +11,7 @@ import { envType } from '../../shared/models/environment';
 export class ChatApiService {
   private http = inject(HttpClient);
   // This is the URL for your FastAPI backend
-  private apiUrl: string = `${(environment as envType).apiUrl}/chat`;
+  private apiUrl: string = `${(environment as envType).fastApiUrl}/chat`;
 
   /**
    * Helper for POST/PUT requests
